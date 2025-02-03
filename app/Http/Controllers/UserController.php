@@ -12,7 +12,7 @@ use App\Interfaces\UserRepositoryInterface;
 class UserController extends Controller
 {
     private UserRepositoryInterface $userRepositoryInterface;
-    
+
     public function __construct(UserRepositoryInterface $userRepositoryInterface)
     {
         $this->userRepositoryInterface = $userRepositoryInterface;
@@ -30,38 +30,29 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        $details =[
-            'email' => $request->email,
-            'password' => $request->password,
-            'name' => $request->name
+        $details = [
+            "email" => $request->email,
+            "password" => $request->password,
+            "name" => $request->name
         ];
-        
+
         DB::beginTransaction();
-        try{
-             $existedUser = $this->userRepositoryInterface->getByEmail($details['email']);
-             if (!empty($existedUser)) {
+        try {
+            $existedUser = $this->userRepositoryInterface->getByEmail($details['email']);
+            if (!empty($existedUser)) {
                 $message = "Email Already Exist!";
-                 return ApiResponseClass::sendResponse('', $message, 400);
-             }
-             $user = $this->userRepositoryInterface->store($details);
-             $message = "User Create Successful";
+                return ApiResponseClass::sendResponse('', $message, 400);
+            }
+            $user = $this->userRepositoryInterface->store($details);
+            $message = "User Create Successful";
 
-             return ApiResponseClass::sendResponse(new UserResource($user), $message, 201);
-             DB::commit();
-
-        }catch(\Exception $e){
+            return ApiResponseClass::sendResponse(new UserResource($user), $message, 201);
+            DB::commit();
+        } catch (\Exception $e) {
             return ApiResponseClass::rollback($e);
         }
     }
@@ -78,35 +69,26 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
     {
-        $updateDetails =[
-            'email' => $request->email,
-            'name' => $request->name
+        $updateDetails = [
+            "email" => $request->email,
+            "name" => $request->name
         ];
 
         DB::beginTransaction();
-        try{
+        try {
             $existedUser = $this->userRepositoryInterface->getById($id);
 
-             $user = $this->userRepositoryInterface->update($updateDetails, $id);
-             $message = "User Update Successfu";
+            $user = $this->userRepositoryInterface->update($updateDetails, $id);
+            $message = "User Update Successfu";
 
-             DB::commit();
-             return ApiResponseClass::sendResponse($message, '', 201);
-
-        }catch(\Exception $ex){
-            return ApiResponseClass::rollback($ex);
+            DB::commit();
+            return ApiResponseClass::sendResponse($message, '', 201);
+        } catch (\Exception $e) {
+            return ApiResponseClass::rollback($e);
         }
     }
 
@@ -118,6 +100,6 @@ class UserController extends Controller
         $this->userRepositoryInterface->delete($id);
         $message = "Product Delete Successful";
 
-        return ResponseClass::sendResponse($message,'',204);
+        return ApiResponseClass::sendResponse($message, '', 204);
     }
 }
