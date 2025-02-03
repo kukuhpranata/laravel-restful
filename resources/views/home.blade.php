@@ -1,0 +1,1 @@
+<h2> RESTFUL API &copy {{ date('Y') }}</h2>
