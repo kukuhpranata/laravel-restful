@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\User;
+use App\Models\UserJwt;
 use App\Interfaces\UserRepositoryInterface;
 
 class UserRepository implements UserRepositoryInterface
@@ -19,7 +20,7 @@ class UserRepository implements UserRepositoryInterface
 
    public function getByemail($email)
    {
-      return User::where('email', $email)->first();
+      return Userjwt::where('email', $email)->first();
    }
 
    public function store(array $data)
@@ -35,5 +36,13 @@ class UserRepository implements UserRepositoryInterface
    public function delete($id)
    {
       User::destroy($id);
+   }
+
+   public function authUser(string $email, string $password)
+   {
+      UserJwt::where([
+         ['email', $email],
+         ['password', $password]
+      ])->first();
    }
 }

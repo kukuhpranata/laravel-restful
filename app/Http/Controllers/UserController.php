@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Classes\ApiResponseClass;
+use App\Helpers\JwtHelper;
 use Illuminate\Support\Facades\DB;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Interfaces\UserRepositoryInterface;
@@ -16,6 +18,39 @@ class UserController extends Controller
     public function __construct(UserRepositoryInterface $userRepositoryInterface)
     {
         $this->userRepositoryInterface = $userRepositoryInterface;
+    }
+
+    public function login(Request $request)
+    {
+        $dataRequest = [
+            "email" => $request->email,
+            "password" => $request->password
+        ];
+
+        $user = $this->userRepositoryInterface->getByemail($dataRequest["email"]);
+        if (empty($user)) {
+            $message = "User Not Registered!";
+            return ApiResponseClass::sendResponse(false, null, $message, 404);
+        }
+
+        if (!($user->password == $dataRequest["password"])) {
+            $message = "Wrong Password!";
+            return ApiResponseClass::sendResponse(false, null, $message, 400);
+        }
+
+        $token = JWTAuth::fromUser($user);
+
+        $message = "Successfully Getting User Data!";
+
+        $responseData = [
+            "user" => [
+                "email" => $user->email,
+                "name" => $user->name
+            ],
+            "token" => $token
+        ];
+
+        return ApiResponseClass::sendResponse(true, $responseData, $message, 200);
     }
 
     /**
@@ -79,7 +114,8 @@ class UserController extends Controller
     {
         $updateDetails = [
             "email" => $request->email,
-            "name" => $request->name
+            "name" => $request->name,
+            "password" => $request->password
         ];
 
         DB::beginTransaction();
@@ -91,6 +127,36 @@ class UserController extends Controller
             }
 
             $user = $this->userRepositoryInterface->update($updateDetails, $id);
+            $message = "User Update Successfu";
+
+            DB::commit();
+            return ApiResponseClass::sendResponse(true, null, $message, 201);
+        } catch (\Exception $e) {
+            return ApiResponseClass::rollback($e);
+        }
+    }
+
+    public function updateOwnData(Request $request)
+    {
+        $jwtHelper = new JwtHelper();
+        $jwtPayload = $jwtHelper->getPayload();
+        $userId = $jwtPayload["user_id"];
+
+        $updateDetails = [
+            "email" => $request->email,
+            "name" => $request->name,
+            "password" => $request->password
+        ];
+
+        DB::beginTransaction();
+        try {
+            $existedUser = $this->userRepositoryInterface->getById($userId);
+            if (empty($existedUser)) {
+                $message = "User Not Found!";
+                return ApiResponseClass::sendResponse(false, null, $message, 404);
+            }
+
+            $user = $this->userRepositoryInterface->update($updateDetails, $userId);
             $message = "User Update Successfu";
 
             DB::commit();

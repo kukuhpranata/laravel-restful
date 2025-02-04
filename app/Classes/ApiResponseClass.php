@@ -37,7 +37,7 @@ class ApiResponseClass
         if (!empty($message)) {
             $response['message'] = $message;
         }
-        if (!empty($data)) {
+        if (!empty($result)) {
             $response['data'] = $result;
         }
         return response()->json($response, $code);
