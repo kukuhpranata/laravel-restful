@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Helpers\CryptHelper;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,8 +23,10 @@ class UserJwt extends Authenticatable implements JWTSubject
 
     public function getJWTCustomClaims()
     {
+        $cryptor = new CryptHelper();
+        $userId = $cryptor->encrypt($this->id);
         return [
-            "user_id" => $this->id
+            "user_id" => $userId
         ];
     }
 

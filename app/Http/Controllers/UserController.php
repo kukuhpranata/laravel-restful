@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\JwtHelper;
+use App\Helpers\CryptHelper;
 use Illuminate\Http\Request;
 use App\Classes\ApiResponseClass;
-use App\Helpers\JwtHelper;
 use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Http\Controllers\Controller;
@@ -97,7 +98,9 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        $user = $this->userRepositoryInterface->getById($id);
+        $cryptor = new CryptHelper();
+        $userId = $cryptor->decrypt($id);
+        $user = $this->userRepositoryInterface->getById($userId);
         if (empty($user)) {
             $message = "User Not Found!";
             return ApiResponseClass::sendResponse(false, null, $message, 404);
@@ -112,6 +115,9 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $cryptor = new CryptHelper();
+        $userId = $cryptor->decrypt($id);
+
         $updateDetails = [
             "email" => $request->email,
             "name" => $request->name,
@@ -120,13 +126,13 @@ class UserController extends Controller
 
         DB::beginTransaction();
         try {
-            $existedUser = $this->userRepositoryInterface->getById($id);
+            $existedUser = $this->userRepositoryInterface->getById($userId);
             if (empty($existedUser)) {
                 $message = "User Not Found!";
                 return ApiResponseClass::sendResponse(false, null, $message, 404);
             }
 
-            $user = $this->userRepositoryInterface->update($updateDetails, $id);
+            $user = $this->userRepositoryInterface->update($updateDetails, $userId);
             $message = "User Update Successfu";
 
             DB::commit();
@@ -139,8 +145,9 @@ class UserController extends Controller
     public function updateOwnData(Request $request)
     {
         $jwtHelper = new JwtHelper();
+        $cryptor = new CryptHelper();
         $jwtPayload = $jwtHelper->getPayload();
-        $userId = $jwtPayload["user_id"];
+        $userId = $cryptor->decrypt($jwtPayload["user_id"]);
 
         $updateDetails = [
             "email" => $request->email,
@@ -171,7 +178,10 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        $this->userRepositoryInterface->delete($id);
+        $cryptor = new CryptHelper();
+        $userId = $cryptor->decrypt($id);
+
+        $this->userRepositoryInterface->delete($userId);
         $message = "Product Delete Successful";
 
         return ApiResponseClass::sendResponse(true, null, $message, 204);
